@@ -1,14 +1,15 @@
 package main
 
 import (
+	"codeproccessor/repository/ram"
 	"codeproccessor/server"
+	"codeproccessor/service"
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
-
-	"log"
 )
 
 func main() {
@@ -16,21 +17,23 @@ func main() {
 	defer stop()
 
 	if err := run(ctx); err != nil {
-		log.Fatalf("error: %w", err)
+		slog.Error("fatal", err)
 		os.Exit(1)
 	}
 }
 
 func run(ctx context.Context) error {
 	mux := http.NewServeMux()
-	server.SetHandlers(mux)
+	repository := ram.NewRamRepository()
+	service := service.NewTaskService(repository)
+	server.SetHandlers(mux, service)
 
 	addr := ":8080"
 	server := &http.Server{Addr: addr, Handler: mux}
 
 	errc := make(chan error, 1)
 	go func() {
-		log.Printf("listening addr: %s\n", addr)
+		slog.Info("listening addr", "addr", addr)
 		errc <- server.ListenAndServe()
 	}()
 
@@ -39,7 +42,7 @@ func run(ctx context.Context) error {
 		return err
 	case <-ctx.Done():
 	}
-	log.Print("shutting down\n")
+	slog.Info("shutting down")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
