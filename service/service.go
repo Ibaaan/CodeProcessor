@@ -50,11 +50,14 @@ func (s *Service) simulatingWork(id uuid.UUID) {
 
 	select {
 	case <-timer.C:
-		s.r.UpdateTask(s.appCtx, id, domain.Ready)
+		if !s.r.UpdateTask(s.appCtx, id, domain.Ready) {
+			slog.Error("cannot update task", "id", id)
+			return
+		}
 		slog.Info("task updated", "id", id)
 		return
 	case <-s.appCtx.Done():
-		slog.Error("cannot update task", "id", id)
+		slog.Error("context canceled: cannot update task", "id", id)
 		return
 	}
 }
