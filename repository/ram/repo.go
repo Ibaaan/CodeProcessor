@@ -30,7 +30,6 @@ func (r *RamRepo) CreateTask(ctx context.Context) (uuid.UUID, error) {
 	r.m[id] = domain.Task{
 		Id:     id,
 		Status: domain.InProgress,
-		Result: domain.Result{Data: "nothing"},
 	}
 
 	return id, nil
@@ -58,6 +57,8 @@ func (r *RamRepo) UpdateTask(ctx context.Context, id uuid.UUID,
 	}
 
 	task.Status = status
+	task.Result = domain.Result{Data: "nothing"}
+
 	r.m[id] = task
 
 	return true, nil
