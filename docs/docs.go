@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/result/{task_id}": {
             "get": {
-                "description": "Returns 200 with status in_progress and an empty result before completion; status ready and the placeholder result nothing after completion.\nGenerated task IDs are UUIDv7; other valid UUID versions are also accepted for lookup.",
+                "description": "Returns 200 while processing; result is empty until ready.",
                 "produces": [
                     "application/json"
                 ],
@@ -30,7 +30,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "format": "uuid",
-                        "description": "Task UUID returned by POST /task",
+                        "description": "Task UUID",
                         "name": "task_id",
                         "in": "path",
                         "required": true
@@ -38,7 +38,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Task status (in_progress or ready) and result",
+                        "description": "Status and result",
                         "schema": {
                             "$ref": "#/definitions/server.resultResponse"
                         }
@@ -56,7 +56,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal error; response body is an empty JSON string",
+                        "description": "Internal error (empty JSON string)",
                         "schema": {
                             "type": "string"
                         }
@@ -66,7 +66,6 @@ const docTemplate = `{
         },
         "/status/{task_id}": {
             "get": {
-                "description": "Status is in_progress or ready. Generated task IDs are UUIDv7; other valid UUID versions are also accepted for lookup.",
                 "produces": [
                     "application/json"
                 ],
@@ -79,7 +78,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "format": "uuid",
-                        "description": "Task UUID returned by POST /task",
+                        "description": "Task UUID",
                         "name": "task_id",
                         "in": "path",
                         "required": true
@@ -87,7 +86,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Task status: in_progress or ready",
+                        "description": "in_progress or ready",
                         "schema": {
                             "$ref": "#/definitions/server.statusResponse"
                         }
@@ -105,7 +104,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal error; response body is an empty JSON string",
+                        "description": "Internal error (empty JSON string)",
                         "schema": {
                             "type": "string"
                         }
@@ -115,7 +114,10 @@ const docTemplate = `{
         },
         "/task": {
             "post": {
-                "description": "No request body is required. Any supplied body is ignored.\nReturns task_id as a canonical 36-character UUIDv7 string (128 bits, not a 64-bit number).",
+                "description": "Requires non-empty code and translator. Returns a 36-character UUIDv7.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -124,21 +126,32 @@ const docTemplate = `{
                 ],
                 "summary": "Create a task",
                 "operationId": "createTask",
+                "parameters": [
+                    {
+                        "description": "Code and translator (both required)",
+                        "name": "task",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.CodeRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
-                        "description": "Created task with its UUIDv7 task_id",
+                        "description": "Task ID (UUIDv7)",
                         "schema": {
                             "$ref": "#/definitions/server.taskResponse"
                         }
                     },
                     "400": {
-                        "description": "cannot create task",
+                        "description": "Invalid body or task creation failed",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal error; response body is an empty JSON string",
+                        "description": "Internal error (empty JSON string)",
                         "schema": {
                             "type": "string"
                         }
@@ -148,6 +161,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "domain.CodeRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "translator": {
+                    "type": "string"
+                }
+            }
+        },
         "server.resultResponse": {
             "type": "object",
             "properties": {
