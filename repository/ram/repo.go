@@ -3,7 +3,6 @@ package ram
 import (
 	"codeproccessor/domain"
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/google/uuid"
@@ -43,22 +42,23 @@ func (r *RamRepo) FindTask(ctx context.Context, id uuid.UUID) (domain.Task, erro
 
 	task, ok := r.m[id]
 	if !ok {
-		return task, errors.New("Task by " + id.String() + " is not found")
+		return task, domain.ErrNotFound
 	}
 	return task, nil
 }
 
-func (r *RamRepo) UpdateTask(ctx context.Context, id uuid.UUID, status domain.TaskStatus) bool {
+func (r *RamRepo) UpdateTask(ctx context.Context, id uuid.UUID,
+	status domain.TaskStatus) (bool, error) {
 	r.rwm.Lock()
 	defer r.rwm.Unlock()
 
 	task, ok := r.m[id]
 	if !ok {
-		return false
+		return false, domain.ErrNotFound
 	}
 
 	task.Status = status
 	r.m[id] = task
 
-	return true
+	return true, nil
 }

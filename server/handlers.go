@@ -1,8 +1,10 @@
 package server
 
 import (
+	"codeproccessor/domain"
 	"codeproccessor/service"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -43,8 +45,11 @@ func taskStatus(s *service.Service) func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		task, err := s.FindTask(r.Context(), id)
-		if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
 			writeJSON(w, 404, "couldn't find task")
+			return
+		} else if err != nil {
+			writeJSON(w, 500, "")
 			return
 		}
 		writeJSON(w, 200, statusResponse{Status: string(task.Status)})
@@ -64,8 +69,11 @@ func taskResult(s *service.Service) func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		task, err := s.FindTask(r.Context(), id)
-		if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
 			writeJSON(w, 404, "couldn't find task")
+			return
+		} else if err != nil {
+			writeJSON(w, 500, "")
 			return
 		}
 		writeJSON(w, 200, resultResponse{

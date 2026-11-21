@@ -12,7 +12,7 @@ import (
 type Repository interface {
 	CreateTask(ctx context.Context) (uuid.UUID, error)
 	FindTask(ctx context.Context, id uuid.UUID) (domain.Task, error)
-	UpdateTask(ctx context.Context, id uuid.UUID, status domain.TaskStatus) bool
+	UpdateTask(ctx context.Context, id uuid.UUID, status domain.TaskStatus) (bool, error)
 }
 
 type Service struct {
@@ -50,8 +50,8 @@ func (s *Service) simulatingWork(id uuid.UUID) {
 
 	select {
 	case <-timer.C:
-		if !s.r.UpdateTask(s.appCtx, id, domain.Ready) {
-			slog.Error("cannot update task", "id", id)
+		if ok, err := s.r.UpdateTask(s.appCtx, id, domain.Ready); !ok {
+			slog.Error("cannot update task", "id", id, "err", err)
 			return
 		}
 		slog.Info("task updated", "id", id)
