@@ -11,54 +11,58 @@ import (
 	"github.com/google/uuid"
 )
 
-func SetHandlers(mux *http.ServeMux, service *service.Service) {
-	mux.HandleFunc("POST /task", taskCreation(service))
-	mux.HandleFunc("GET /status/{task_id}", taskStatus(service))
-	mux.HandleFunc("GET /result/{task_id}", taskResult(service))
+type Handlers struct {
+	s *service.Service
+}
+
+func NewHandlers(s *service.Service) *Handlers {
+	return &Handlers{s: s}
+}
+
+func (h *Handlers) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("POST /task", h.taskCreation)
+	mux.HandleFunc("GET /status/{task_id}", h.taskStatus)
+	mux.HandleFunc("GET /result/{task_id}", h.taskResult)
 }
 
 type taskResponse struct {
 	TaskId string `json:"task_id"`
 }
 
-func taskCreation(s *service.Service) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := s.CreateTask(r.Context())
-		if errors.Is(err, domain.ErrTaskCreation) {
-			slog.Error("cannot create task", "err", err)
-			writeJSON(w, 400, "cannot create task")
-			return
-		} else if err != nil {
-			slog.Error("INTERNAL ERROR", "err", err)
-			writeJSON(w, 500, "")
-			return
-		}
-		writeJSON(w, 201, taskResponse{TaskId: id.String()})
+func (h *Handlers) taskCreation(w http.ResponseWriter, r *http.Request) {
+	id, err := h.s.CreateTask(r.Context())
+	if errors.Is(err, domain.ErrTaskCreation) {
+		slog.Error("cannot create task", "err", err)
+		writeJSON(w, 400, "cannot create task")
+		return
+	} else if err != nil {
+		slog.Error("INTERNAL ERROR", "err", err)
+		writeJSON(w, 500, "")
+		return
 	}
+	writeJSON(w, 201, taskResponse{TaskId: id.String()})
 }
 
 type statusResponse struct {
 	Status string `json:"status"`
 }
 
-func taskStatus(s *service.Service) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := uuid.Parse(r.PathValue("task_id"))
-		if err != nil {
-			writeJSON(w, 400, "wrong id")
-			return
-		}
-		task, err := s.FindTask(r.Context(), id)
-		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, 404, "couldn't find task")
-			return
-		} else if err != nil {
-			slog.Error("INTERNAL ERROR", "err", err)
-			writeJSON(w, 500, "")
-			return
-		}
-		writeJSON(w, 200, statusResponse{Status: string(task.Status)})
+func (h *Handlers) taskStatus(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("task_id"))
+	if err != nil {
+		writeJSON(w, 400, "wrong id")
+		return
 	}
+	task, err := h.s.FindTask(r.Context(), id)
+	if errors.Is(err, domain.ErrNotFound) {
+		writeJSON(w, 404, "couldn't find task")
+		return
+	} else if err != nil {
+		slog.Error("INTERNAL ERROR", "err", err)
+		writeJSON(w, 500, "")
+		return
+	}
+	writeJSON(w, 200, statusResponse{Status: string(task.Status)})
 }
 
 type resultResponse struct {
@@ -66,27 +70,25 @@ type resultResponse struct {
 	Result string `json:"result"`
 }
 
-func taskResult(s *service.Service) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := uuid.Parse(r.PathValue("task_id"))
-		if err != nil {
-			writeJSON(w, 400, "wrong id")
-			return
-		}
-		task, err := s.FindTask(r.Context(), id)
-		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, 404, "couldn't find task")
-			return
-		} else if err != nil {
-			slog.Error("INTERNAL ERROR", "err", err)
-			writeJSON(w, 500, "")
-			return
-		}
-		writeJSON(w, 200, resultResponse{
-			Status: string(task.Status),
-			Result: task.Result.Data,
-		})
+func (h *Handlers) taskResult(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("task_id"))
+	if err != nil {
+		writeJSON(w, 400, "wrong id")
+		return
 	}
+	task, err := h.s.FindTask(r.Context(), id)
+	if errors.Is(err, domain.ErrNotFound) {
+		writeJSON(w, 404, "couldn't find task")
+		return
+	} else if err != nil {
+		slog.Error("INTERNAL ERROR", "err", err)
+		writeJSON(w, 500, "")
+		return
+	}
+	writeJSON(w, 200, resultResponse{
+		Status: string(task.Status),
+		Result: task.Result.Data,
+	})
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {

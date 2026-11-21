@@ -20,8 +20,8 @@ type Service struct {
 	appCtx context.Context
 }
 
-func NewTaskService(r Repository, ctx context.Context) Service {
-	return Service{r: r, appCtx: ctx}
+func NewTaskService(r Repository, ctx context.Context) *Service {
+	return &Service{r: r, appCtx: ctx}
 }
 
 func (s *Service) CreateTask(ctx context.Context) (uuid.UUID, error) {
