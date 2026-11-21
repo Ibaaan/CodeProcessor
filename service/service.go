@@ -27,7 +27,8 @@ func NewTaskService(r Repository, ctx context.Context) Service {
 func (s *Service) CreateTask(ctx context.Context) (uuid.UUID, error) {
 	id, err := s.r.CreateTask(ctx)
 	if err != nil {
-		return id, err
+		slog.Error("failed to create task", "err", err)
+		return uuid.Nil, err
 	}
 	go s.simulatingWork(id)
 	slog.Info("task created", "id", id)

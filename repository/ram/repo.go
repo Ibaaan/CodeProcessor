@@ -3,6 +3,7 @@ package ram
 import (
 	"codeproccessor/domain"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -21,7 +22,7 @@ func NewRamRepository() *RamRepo {
 func (r *RamRepo) CreateTask(ctx context.Context) (uuid.UUID, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
-		return id, err
+		return uuid.Nil, fmt.Errorf("%w:%w", domain.ErrTaskCreation, err)
 	}
 
 	r.rwm.Lock()

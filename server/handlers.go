@@ -24,9 +24,13 @@ type taskResponse struct {
 func taskCreation(s *service.Service) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := s.CreateTask(r.Context())
-		if err != nil {
+		if errors.Is(err, domain.ErrTaskCreation) {
 			slog.Error("cannot create task", "err", err)
 			writeJSON(w, 400, "cannot create task")
+			return
+		} else if err != nil {
+			slog.Error("INTERNAL ERROR", "err", err)
+			writeJSON(w, 500, "")
 			return
 		}
 		writeJSON(w, 201, taskResponse{TaskId: id.String()})
@@ -49,6 +53,7 @@ func taskStatus(s *service.Service) func(w http.ResponseWriter, r *http.Request)
 			writeJSON(w, 404, "couldn't find task")
 			return
 		} else if err != nil {
+			slog.Error("INTERNAL ERROR", "err", err)
 			writeJSON(w, 500, "")
 			return
 		}
@@ -73,6 +78,7 @@ func taskResult(s *service.Service) func(w http.ResponseWriter, r *http.Request)
 			writeJSON(w, 404, "couldn't find task")
 			return
 		} else if err != nil {
+			slog.Error("INTERNAL ERROR", "err", err)
 			writeJSON(w, 500, "")
 			return
 		}
