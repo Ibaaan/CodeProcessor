@@ -47,20 +47,16 @@ func (r *RamRepo) FindTask(ctx context.Context, id uuid.UUID) (domain.Task, erro
 	return task, nil
 }
 
-func (r *RamRepo) UpdateTask(ctx context.Context, id uuid.UUID,
-	status domain.TaskStatus) (bool, error) {
+func (r *RamRepo) UpdateTask(ctx context.Context, task domain.Task) (bool, error) {
 	r.rwm.Lock()
 	defer r.rwm.Unlock()
 
-	task, ok := r.m[id]
+	_, ok := r.m[task.Id]
 	if !ok {
 		return false, domain.ErrNotFound
 	}
 
-	task.Status = status
-	task.Result = domain.Result{Data: "nothing"}
-
-	r.m[id] = task
+	r.m[task.Id] = task
 
 	return true, nil
 }

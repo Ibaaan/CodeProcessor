@@ -10,11 +10,17 @@ const (
 )
 
 type Task struct {
-	Id     uuid.UUID
-	Status TaskStatus
-	Result Result
+	Id          uuid.UUID
+	Status      TaskStatus
+	CodeRequest CodeRequest
+	Result      Result
 }
 
 type Result struct {
 	Data string
+}
+
+type CodeRequest struct {
+	Trans string `json:"translator"`
+	Code  string `json:"code"`
 }

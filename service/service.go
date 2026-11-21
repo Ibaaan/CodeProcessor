@@ -12,7 +12,7 @@ import (
 type Repository interface {
 	CreateTask(ctx context.Context) (uuid.UUID, error)
 	FindTask(ctx context.Context, id uuid.UUID) (domain.Task, error)
-	UpdateTask(ctx context.Context, id uuid.UUID, status domain.TaskStatus) (bool, error)
+	UpdateTask(ctx context.Context, task domain.Task) (bool, error)
 }
 
 type Service struct {
@@ -24,13 +24,13 @@ func NewTaskService(r Repository, ctx context.Context) *Service {
 	return &Service{r: r, appCtx: ctx}
 }
 
-func (s *Service) CreateTask(ctx context.Context) (uuid.UUID, error) {
+func (s *Service) CreateTask(ctx context.Context, cr domain.CodeRequest) (uuid.UUID, error) {
 	id, err := s.r.CreateTask(ctx)
 	if err != nil {
 		slog.Error("failed to create task", "err", err)
 		return uuid.Nil, err
 	}
-	go s.simulatingWork(id)
+	go s.simulatingWork(id, cr)
 	slog.Info("task created", "id", id)
 	return id, nil
 }
@@ -45,14 +45,20 @@ func (s *Service) FindTask(ctx context.Context, id uuid.UUID) (domain.Task, erro
 	return task, nil
 }
 
-func (s *Service) simulatingWork(id uuid.UUID) {
+func (s *Service) simulatingWork(id uuid.UUID, cr domain.CodeRequest) {
+	slog.Info("start simulating doing", "code", cr)
 	timer := time.NewTimer(5 * time.Second)
 	defer timer.Stop()
 
 	select {
 	case <-timer.C:
-		if ok, err := s.r.UpdateTask(s.appCtx, id, domain.Ready); !ok {
-			slog.Error("cannot update task", "id", id, "err", err)
+		ok, err := s.r.UpdateTask(s.appCtx, domain.Task{
+			Id:     id,
+			Status: domain.Ready,
+			Result: domain.Result{Data: "nothing"},
+		})
+		if !ok {
+			slog.Error("cannot update ", "id", id, "err", err)
 			return
 		}
 		slog.Info("task updated", "id", id)

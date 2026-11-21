@@ -41,7 +41,15 @@ type taskResponse struct {
 // @Failure 500 {string} string "Internal error; response body is an empty JSON string"
 // @Router /task [post]
 func (h *Handlers) taskCreation(w http.ResponseWriter, r *http.Request) {
-	id, err := h.s.CreateTask(r.Context())
+	var cr domain.CodeRequest
+	err := json.NewDecoder(r.Body).Decode(&cr)
+	if err != nil || cr.Code == "" || cr.Trans == "" {
+		slog.Error("invalid request", "err", err)
+		writeJSON(w, 400, "body should contain `translator` and `code`")
+		return
+	}
+
+	id, err := h.s.CreateTask(r.Context(), cr)
 	if errors.Is(err, domain.ErrTaskCreation) {
 		slog.Error("cannot create task", "err", err)
 		writeJSON(w, 400, "cannot create task")
