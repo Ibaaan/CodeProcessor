@@ -68,7 +68,10 @@ func taskResult(s *service.Service) func(w http.ResponseWriter, r *http.Request)
 			writeJSON(w, 404, "couldn't find task")
 			return
 		}
-		writeJSON(w, 200, resultResponse{Status: string(task.Status)})
+		writeJSON(w, 200, resultResponse{
+			Status: string(task.Status),
+			Result: task.Result.Data,
+		})
 	}
 }
 

@@ -12,4 +12,9 @@ const (
 type Task struct {
 	Id     uuid.UUID
 	Status TaskStatus
+	Result Result
+}
+
+type Result struct {
+	Data string
 }

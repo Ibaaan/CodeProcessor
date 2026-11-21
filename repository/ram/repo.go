@@ -28,7 +28,11 @@ func (r *RamRepo) CreateTask(ctx context.Context) (uuid.UUID, error) {
 	r.rwm.Lock()
 	defer r.rwm.Unlock()
 
-	r.m[id] = domain.Task{Id: id, Status: domain.InProgress}
+	r.m[id] = domain.Task{
+		Id:     id,
+		Status: domain.InProgress,
+		Result: domain.Result{Data: "nothing"},
+	}
 
 	return id, nil
 }
