@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "codeproccessor/docs"
 	"codeproccessor/repository/ram"
 	"codeproccessor/server"
 	"codeproccessor/service"
@@ -11,8 +12,12 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
+// @title CodeProcessor API
+// @version 1.0
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -28,6 +33,8 @@ func run(ctx context.Context) error {
 	repository := ram.NewRamRepository()
 	service := service.NewTaskService(repository, ctx)
 	handlers := server.NewHandlers(service)
+
+	mux.HandleFunc("GET /swagger/", httpSwagger.WrapHandler)
 	handlers.RegisterRoutes(mux)
 
 	addr := ":8000"

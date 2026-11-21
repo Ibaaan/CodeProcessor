@@ -1,0 +1,117 @@
+definitions:
+  server.resultResponse:
+    properties:
+      result:
+        type: string
+      status:
+        type: string
+    type: object
+  server.statusResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  server.taskResponse:
+    properties:
+      task_id:
+        type: string
+    type: object
+info:
+  contact: {}
+  title: CodeProcessor API
+  version: "1.0"
+paths:
+  /result/{task_id}:
+    get:
+      description: |-
+        Returns 200 with status in_progress and an empty result before completion; status ready and the placeholder result nothing after completion.
+        Generated task IDs are UUIDv7; other valid UUID versions are also accepted for lookup.
+      operationId: getTaskResult
+      parameters:
+      - description: Task UUID returned by POST /task
+        format: uuid
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task status (in_progress or ready) and result
+          schema:
+            $ref: '#/definitions/server.resultResponse'
+        "400":
+          description: wrong id
+          schema:
+            type: string
+        "404":
+          description: couldn't find task
+          schema:
+            type: string
+        "500":
+          description: Internal error; response body is an empty JSON string
+          schema:
+            type: string
+      summary: Get task result
+      tags:
+      - tasks
+  /status/{task_id}:
+    get:
+      description: Status is in_progress or ready. Generated task IDs are UUIDv7;
+        other valid UUID versions are also accepted for lookup.
+      operationId: getTaskStatus
+      parameters:
+      - description: Task UUID returned by POST /task
+        format: uuid
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Task status: in_progress or ready'
+          schema:
+            $ref: '#/definitions/server.statusResponse'
+        "400":
+          description: wrong id
+          schema:
+            type: string
+        "404":
+          description: couldn't find task
+          schema:
+            type: string
+        "500":
+          description: Internal error; response body is an empty JSON string
+          schema:
+            type: string
+      summary: Get task status
+      tags:
+      - tasks
+  /task:
+    post:
+      description: |-
+        No request body is required. Any supplied body is ignored.
+        Returns task_id as a canonical 36-character UUIDv7 string (128 bits, not a 64-bit number).
+      operationId: createTask
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created task with its UUIDv7 task_id
+          schema:
+            $ref: '#/definitions/server.taskResponse'
+        "400":
+          description: cannot create task
+          schema:
+            type: string
+        "500":
+          description: Internal error; response body is an empty JSON string
+          schema:
+            type: string
+      summary: Create a task
+      tags:
+      - tasks
+swagger: "2.0"
