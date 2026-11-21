@@ -25,7 +25,7 @@ func main() {
 func run(ctx context.Context) error {
 	mux := http.NewServeMux()
 	repository := ram.NewRamRepository()
-	service := service.NewTaskService(repository)
+	service := service.NewTaskService(repository, ctx)
 	server.SetHandlers(mux, &service)
 
 	addr := ":8000"

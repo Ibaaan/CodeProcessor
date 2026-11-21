@@ -16,11 +16,12 @@ type Repository interface {
 }
 
 type Service struct {
-	r Repository
+	r      Repository
+	appCtx context.Context
 }
 
-func NewTaskService(r Repository) Service {
-	return Service{r: r}
+func NewTaskService(r Repository, ctx context.Context) Service {
+	return Service{r: r, appCtx: ctx}
 }
 
 func (s *Service) CreateTask(ctx context.Context) (uuid.UUID, error) {
@@ -28,11 +29,7 @@ func (s *Service) CreateTask(ctx context.Context) (uuid.UUID, error) {
 	if err != nil {
 		return id, err
 	}
-	go func() {
-		time.Sleep(1 * time.Second)
-		s.r.UpdateTask(ctx, id, domain.Ready)
-		slog.Info("task updated", "id", id)
-	}()
+	go s.simulatingWork(id)
 	slog.Info("task created", "id", id)
 	return id, nil
 }
@@ -45,4 +42,19 @@ func (s *Service) FindTask(ctx context.Context, id uuid.UUID) (domain.Task, erro
 	}
 	slog.Info("successfully found", "task", task)
 	return task, nil
+}
+
+func (s *Service) simulatingWork(id uuid.UUID) {
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		s.r.UpdateTask(s.appCtx, id, domain.Ready)
+		slog.Info("task updated", "id", id)
+		return
+	case <-s.appCtx.Done():
+		slog.Error("cannot update task", "id", id)
+		return
+	}
 }
