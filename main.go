@@ -17,7 +17,7 @@ func main() {
 	defer stop()
 
 	if err := run(ctx); err != nil {
-		slog.Error("fatal", err)
+		slog.Error("fatal", "err", err)
 		os.Exit(1)
 	}
 }

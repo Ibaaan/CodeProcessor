@@ -29,13 +29,10 @@ func (s *Service) CreateTask(ctx context.Context) (uuid.UUID, error) {
 		return id, err
 	}
 	go func() {
-		if err := sleep(30 * time.Second); err != nil {
-			slog.Error("task failed to update", "id", id, "err", err)
-			return
-		} else {
-			s.r.UpdateTask(ctx, id, domain.Ready)
-			slog.Info("task updated", "id", id)
-		}
+		timer := time.NewTimer(30 * time.Second)
+		<-timer.C
+		s.r.UpdateTask(ctx, id, domain.Ready)
+		slog.Info("task updated", "id", id)
 	}()
 	slog.Info("task created", "id", id)
 	return id, nil
@@ -49,18 +46,4 @@ func (s *Service) FindTask(ctx context.Context, id uuid.UUID) (domain.Task, erro
 	}
 	slog.Info("successfully found", "task", task)
 	return task, nil
-}
-
-func sleep(d time.Duration) error {
-	//TODO
-	ctx := context.Background()
-	timer := time.NewTimer(d)
-	defer timer.Stop()
-
-	select {
-	case <-timer.C:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
-	}
 }
