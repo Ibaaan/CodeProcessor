@@ -26,9 +26,9 @@ func run(ctx context.Context) error {
 	mux := http.NewServeMux()
 	repository := ram.NewRamRepository()
 	service := service.NewTaskService(repository)
-	server.SetHandlers(mux, service)
+	server.SetHandlers(mux, &service)
 
-	addr := ":8080"
+	addr := ":8000"
 	server := &http.Server{Addr: addr, Handler: mux}
 
 	errc := make(chan error, 1)

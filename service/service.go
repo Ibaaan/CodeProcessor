@@ -29,8 +29,7 @@ func (s *Service) CreateTask(ctx context.Context) (uuid.UUID, error) {
 		return id, err
 	}
 	go func() {
-		timer := time.NewTimer(30 * time.Second)
-		<-timer.C
+		time.Sleep(1 * time.Second)
 		s.r.UpdateTask(ctx, id, domain.Ready)
 		slog.Info("task updated", "id", id)
 	}()

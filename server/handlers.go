@@ -9,24 +9,33 @@ import (
 	"github.com/google/uuid"
 )
 
-func SetHandlers(mux *http.ServeMux, service service.Service) {
+func SetHandlers(mux *http.ServeMux, service *service.Service) {
 	mux.HandleFunc("POST /task", taskCreation(service))
 	mux.HandleFunc("GET /status/{task_id}", taskStatus(service))
 	mux.HandleFunc("GET /result/{task_id}", taskResult(service))
 }
 
-func taskCreation(s service.Service) func(w http.ResponseWriter, r *http.Request) {
+type taskResponse struct {
+	TaskId string `json:"task_id"`
+}
+
+func taskCreation(s *service.Service) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := s.CreateTask(r.Context())
 		if err != nil {
-			writeJSON(w, 400, "ure stupid")
+			slog.Error("cannot create task", "err", err)
+			writeJSON(w, 400, "cannot create task")
 			return
 		}
-		writeJSON(w, 200, map[string]string{"uuid": id.String()})
+		writeJSON(w, 201, taskResponse{TaskId: id.String()})
 	}
 }
 
-func taskStatus(s service.Service) func(w http.ResponseWriter, r *http.Request) {
+type statusResponse struct {
+	Status string `json:"status"`
+}
+
+func taskStatus(s *service.Service) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := uuid.Parse(r.PathValue("task_id"))
 		if err != nil {
@@ -35,14 +44,19 @@ func taskStatus(s service.Service) func(w http.ResponseWriter, r *http.Request) 
 		}
 		task, err := s.FindTask(r.Context(), id)
 		if err != nil {
-			writeJSON(w, 400, "couldn't find task")
+			writeJSON(w, 404, "couldn't find task")
 			return
 		}
-		writeJSON(w, 200, map[string]string{"status": string(task.Status)})
+		writeJSON(w, 200, statusResponse{Status: string(task.Status)})
 	}
 }
 
-func taskResult(s service.Service) func(w http.ResponseWriter, r *http.Request) {
+type resultResponse struct {
+	Status string `json:"status"`
+	Result string `json:"result"`
+}
+
+func taskResult(s *service.Service) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := uuid.Parse(r.PathValue("task_id"))
 		if err != nil {
@@ -51,10 +65,10 @@ func taskResult(s service.Service) func(w http.ResponseWriter, r *http.Request) 
 		}
 		task, err := s.FindTask(r.Context(), id)
 		if err != nil {
-			writeJSON(w, 400, "couldn't find task")
+			writeJSON(w, 404, "couldn't find task")
 			return
 		}
-		writeJSON(w, 200, map[string]string{"status": string(task.Status)})
+		writeJSON(w, 200, resultResponse{Status: string(task.Status)})
 	}
 }
 

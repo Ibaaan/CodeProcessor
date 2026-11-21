@@ -23,7 +23,7 @@ func (r *RamRepo) CreateTask(ctx context.Context) (uuid.UUID, error) {
 		return id, err
 	}
 
-	r.m[id] = domain.Task{Id: id, Status: domain.Pending}
+	r.m[id] = domain.Task{Id: id, Status: domain.InProgress}
 
 	return id, nil
 }

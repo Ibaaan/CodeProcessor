@@ -5,8 +5,8 @@ import "github.com/google/uuid"
 type TaskStatus string
 
 const (
-	Pending TaskStatus = "pending"
-	Ready   TaskStatus = "ready"
+	InProgress TaskStatus = "in_progress"
+	Ready      TaskStatus = "ready"
 )
 
 type Task struct {
