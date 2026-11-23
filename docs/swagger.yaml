@@ -2,8 +2,10 @@ definitions:
   domain.CodeRequest:
     properties:
       code:
+        minLength: 1
         type: string
       translator:
+        minLength: 1
         type: string
     required:
     - code

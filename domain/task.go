@@ -21,6 +21,6 @@ type Result struct {
 }
 
 type CodeRequest struct {
-	Trans string `json:"translator" validate:"required"`
-	Code  string `json:"code" validate:"required"`
+	Trans string `json:"translator" validate:"required" minLength:"1"`
+	Code  string `json:"code" validate:"required" minLength:"1"`
 }

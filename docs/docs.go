@@ -169,10 +169,12 @@ const docTemplate = `{
             ],
             "properties": {
                 "code": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                 },
                 "translator": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                 }
             }
         },
