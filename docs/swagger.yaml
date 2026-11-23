@@ -5,6 +5,9 @@ definitions:
         type: string
       translator:
         type: string
+    required:
+    - code
+    - translator
     type: object
   server.resultResponse:
     properties:

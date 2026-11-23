@@ -163,6 +163,10 @@ const docTemplate = `{
     "definitions": {
         "domain.CodeRequest": {
             "type": "object",
+            "required": [
+                "code",
+                "translator"
+            ],
             "properties": {
                 "code": {
                     "type": "string"
