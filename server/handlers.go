@@ -5,6 +5,7 @@ import (
 	"codeproccessor/service"
 	"encoding/json"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 
@@ -42,19 +43,23 @@ type taskResponse struct {
 // @Router /task [post]
 func (h *Handlers) taskCreation(w http.ResponseWriter, r *http.Request) {
 	var cr domain.CodeRequest
-	err := json.NewDecoder(r.Body).Decode(&cr)
+	d := json.NewDecoder(r.Body)
+	err := d.Decode(&cr)
+
 	if err != nil || cr.Code == "" || cr.Trans == "" {
 		slog.Error("invalid request", "err", err)
 		writeJSON(w, 400, "body should contain `translator` and `code`")
 		return
 	}
 
-	id, err := h.s.CreateTask(r.Context(), cr)
-	if errors.Is(err, domain.ErrTaskCreation) {
-		slog.Error("cannot create task", "err", err)
-		writeJSON(w, 400, "cannot create task")
+	if err := d.Decode(new(any)); err != io.EOF {
+		slog.Error("extra data after request object", "err", err)
+		writeJSON(w, 400, "body must contain exactly one JSON object")
 		return
-	} else if err != nil {
+	}
+
+	id, err := h.s.CreateTask(r.Context(), cr)
+	if err != nil {
 		slog.Error("INTERNAL ERROR", "err", err)
 		writeJSON(w, 500, "")
 		return

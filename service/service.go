@@ -10,9 +10,10 @@ import (
 )
 
 type Repository interface {
-	CreateTask(ctx context.Context) (uuid.UUID, error)
+	CreateTask(ctx context.Context, cr domain.CodeRequest) (uuid.UUID, error)
 	FindTask(ctx context.Context, id uuid.UUID) (domain.Task, error)
-	UpdateTask(ctx context.Context, task domain.Task) (bool, error)
+	UpdateTask(ctx context.Context, id uuid.UUID,
+		status domain.TaskStatus, r domain.Result) (bool, error)
 }
 
 type Service struct {
@@ -25,7 +26,7 @@ func NewTaskService(r Repository, ctx context.Context) *Service {
 }
 
 func (s *Service) CreateTask(ctx context.Context, cr domain.CodeRequest) (uuid.UUID, error) {
-	id, err := s.r.CreateTask(ctx)
+	id, err := s.r.CreateTask(ctx, cr)
 	if err != nil {
 		slog.Error("failed to create task", "err", err)
 		return uuid.Nil, err
@@ -52,11 +53,11 @@ func (s *Service) simulatingWork(id uuid.UUID, cr domain.CodeRequest) {
 
 	select {
 	case <-timer.C:
-		ok, err := s.r.UpdateTask(s.appCtx, domain.Task{
-			Id:     id,
-			Status: domain.Ready,
-			Result: domain.Result{Data: "nothing"},
-		})
+		ok, err := s.r.UpdateTask(s.appCtx,
+			id,
+			domain.Ready,
+			domain.Result{Data: "nothing"},
+		)
 		if !ok {
 			slog.Error("cannot update ", "id", id, "err", err)
 			return
