@@ -1,0 +1,133 @@
+definitions:
+  domain.CodeRequest:
+    properties:
+      code:
+        minLength: 1
+        type: string
+      translator:
+        minLength: 1
+        type: string
+    required:
+    - code
+    - translator
+    type: object
+  server.resultResponse:
+    properties:
+      result:
+        type: string
+      status:
+        type: string
+    type: object
+  server.statusResponse:
+    properties:
+      status:
+        type: string
+    type: object
+  server.taskResponse:
+    properties:
+      task_id:
+        type: string
+    type: object
+info:
+  contact: {}
+  title: CodeProcessor API
+  version: "1.0"
+paths:
+  /result/{task_id}:
+    get:
+      description: Returns 200 while processing; result is empty until ready.
+      operationId: getTaskResult
+      parameters:
+      - description: Task UUID
+        format: uuid
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status and result
+          schema:
+            $ref: '#/definitions/server.resultResponse'
+        "400":
+          description: wrong id
+          schema:
+            type: string
+        "404":
+          description: couldn't find task
+          schema:
+            type: string
+        "500":
+          description: Internal error (empty JSON string)
+          schema:
+            type: string
+      summary: Get task result
+      tags:
+      - tasks
+  /status/{task_id}:
+    get:
+      operationId: getTaskStatus
+      parameters:
+      - description: Task UUID
+        format: uuid
+        in: path
+        name: task_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: in_progress or ready
+          schema:
+            $ref: '#/definitions/server.statusResponse'
+        "400":
+          description: wrong id
+          schema:
+            type: string
+        "404":
+          description: couldn't find task
+          schema:
+            type: string
+        "500":
+          description: Internal error (empty JSON string)
+          schema:
+            type: string
+      summary: Get task status
+      tags:
+      - tasks
+  /task:
+    post:
+      consumes:
+      - application/json
+      description: Requires non-empty code and translator. Returns a 36-character
+        UUIDv7.
+      operationId: createTask
+      parameters:
+      - description: Code and translator (both required)
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CodeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Task ID (UUIDv7)
+          schema:
+            $ref: '#/definitions/server.taskResponse'
+        "400":
+          description: Invalid body or task creation failed
+          schema:
+            type: string
+        "500":
+          description: Internal error (empty JSON string)
+          schema:
+            type: string
+      summary: Create a task
+      tags:
+      - tasks
+swagger: "2.0"
